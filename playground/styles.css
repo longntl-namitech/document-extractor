@@ -278,6 +278,12 @@ h1:focus, h2:focus { outline: none; }
 .paper-rendered { background: var(--surface-2); color: var(--text); border-style: dashed; border-color: var(--border-strong); --paper-text: var(--text); --paper-muted: var(--muted); --paper-line: var(--border); }
 .paper-scroll { position: relative; height: 720px; overflow-y: auto; display: grid; gap: var(--s5); align-content: start; }
 .paper-scroll .paper { min-height: 480px; }
+.raw-frame { display: block; width: 100%; height: 720px; border: 1px solid var(--paper-line); border-radius: 4px; background: var(--paper); }
+.raw-img { display: block; max-width: 100%; height: auto; border: 1px solid var(--paper-line); border-radius: 4px; }
+.raw-csv { max-height: 720px; overflow: auto; background: var(--paper); color: var(--paper-text); border: 1px solid var(--paper-line); border-radius: 4px; font-size: var(--fs-small); }
+.raw-csv table { border-collapse: collapse; min-width: 100%; font-variant-numeric: tabular-nums; }
+.raw-csv th, .raw-csv td { text-align: left; padding: 6px 10px; border-bottom: 1px solid var(--paper-line); border-right: 1px solid var(--paper-line); white-space: pre-wrap; vertical-align: top; }
+.raw-csv th { position: sticky; top: 0; background: var(--paper); font-size: var(--fs-caption); font-weight: 500; color: var(--paper-muted); }
 .paper-label { display: flex; align-items: center; gap: var(--s2); font-size: var(--fs-small); color: var(--muted); margin-bottom: var(--s2); }
 .note { display: flex; gap: var(--s2); align-items: flex-start; font-size: var(--fs-small); color: var(--muted); margin-bottom: var(--s4); --od-icon-size: 16px; }
 .note .od-icon { margin-top: 4px; }

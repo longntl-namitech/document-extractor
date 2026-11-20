@@ -144,7 +144,7 @@
       case 'damaged':
         return { title: 'This file looks damaged', text: `${name} could not be opened, so nothing was processed or charged.`, hint: 'Export or save the file again from the original app and retry.', retry: true };
       case 'unsupported':
-        return { title: 'File type not supported', text: `${name} is a .${(d.ext || '').toUpperCase() || 'unknown'} file. Accepted types are PDF, PNG, JPG, DOCX, XLSX and PPTX.`, hint: 'Convert the file to one of the accepted types and try again.', retry: true };
+        return { title: 'File type not supported', text: `${name} is a .${(d.ext || '').toUpperCase() || 'unknown'} file. Accepted types are PDF, PNG, JPG, CSV, DOCX, XLSX and PPTX.`, hint: 'Convert the file to one of the accepted types and try again.', retry: true };
       default:
         return { title: 'Something went wrong', text: 'The file could not be processed. Nothing was charged.', hint: 'Try again in a moment.', retry: true };
     }
@@ -154,7 +154,7 @@
   async function showHome(focusSel) {
     cleanupJob();
     const [limits, samples, history] = await Promise.all([refreshStats(), api.listSamples(), api.listHistory()]);
-    const input = h('input', { type: 'file', hidden: true, id: 'file-input', accept: '.pdf,.png,.jpg,.jpeg,.docx,.xlsx,.pptx', 'aria-label': 'Choose a file to process' });
+    const input = h('input', { type: 'file', hidden: true, id: 'file-input', accept: '.pdf,.png,.jpg,.jpeg,.csv,.docx,.xlsx,.pptx', 'aria-label': 'Choose a file to process' });
     const pick = () => input.click();
 
     const chooseBtn = h('button', { type: 'button', class: 'btn btn-primary', id: 'choose', 'data-focus-first': true, onclick: pick }, icon('file'), 'Choose a file');
@@ -166,7 +166,7 @@
       h('h2', { id: 'drop-h', text: 'Drop a document here' }),
       h('p', { text: 'One file at a time. You get Markdown and structured JSON back.' }),
       chooseBtn,
-      h('div', { class: 'formats', 'aria-label': 'Accepted file types' }, ['PDF', 'PNG', 'JPG', 'DOCX', 'XLSX', 'PPTX'].map((t) => h('span', { class: 'badge', text: t }))),
+      h('div', { class: 'formats', 'aria-label': 'Accepted file types' }, ['PDF', 'PNG', 'JPG', 'CSV', 'DOCX', 'XLSX', 'PPTX'].map((t) => h('span', { class: 'badge', text: t }))),
       h('div', { class: 'limits' },
         limitStat(fmtBytes(limits.maxBytes), 'per file'),
         limitStat(String(limits.maxPages), 'pages per file')),
@@ -391,9 +391,56 @@
     toast(`${name} downloaded`);
   }
 
+  /* quoted fields, "" escapes and line breaks inside quotes */
+  function parseCsv(text) {
+    const rows = [];
+    let row = [], f = '', q = false;
+    for (let i = text.charCodeAt(0) === 0xFEFF ? 1 : 0; i < text.length; i++) {
+      const c = text[i];
+      if (q) {
+        if (c === '"' && text[i + 1] === '"') { f += '"'; i++; }
+        else if (c === '"') q = false;
+        else f += c;
+      } else if (c === '"') q = true;
+      else if (c === ',') { row.push(f); f = ''; }
+      else if (c === '\n' || c === '\r') {
+        if (c === '\r' && text[i + 1] === '\n') i++;
+        row.push(f); rows.push(row); row = []; f = '';
+      } else f += c;
+    }
+    if (f !== '' || row.length) { row.push(f); rows.push(row); }
+    return rows;
+  }
+
+  /* The uploaded file, shown as it is: PDF in the browser viewer, CSV as a table, image as an image.
+     Other types (and samples, or a reload, where the File is gone) keep the rendered view. */
+  async function rawView(job) {
+    let f = job.file;
+    if (!(f instanceof Blob) && job.src) {
+      try { f = await (await fetch(job.src)).blob(); } catch (e) { /* opened from file://, keep the rendered view */ }
+    }
+    if (!(f instanceof Blob)) return null;
+    if (job.ext === 'pdf') {
+      const url = URL.createObjectURL(f);
+      return { kind: 'pdf', node: h('iframe', { class: 'raw-frame', title: `Original ${job.name}` }), at: (n) => `${url}#page=${n}` };
+    }
+    if (job.ext === 'csv') {
+      const rows = parseCsv(await f.text());
+      const [head = [], ...body] = rows;
+      return { kind: 'csv', node: h('div', { class: 'raw-csv', tabindex: '0', 'aria-label': `Original ${job.name}` },
+        h('table', {}, h('thead', {}, h('tr', {}, head.map((t) => h('th', { scope: 'col', text: t })))),
+          h('tbody', {}, body.map((r) => h('tr', {}, r.map((c) => h('td', { text: c}))))))) };
+    }
+    if (['png', 'jpg', 'jpeg'].includes(job.ext)) {
+      return { kind: 'img', node: h('img', { class: 'raw-img', src: URL.createObjectURL(f), alt: `Original ${job.name}` }) };
+    }
+    return null;
+  }
+
   async function showResult(id, from) {
     cleanupJob();
     const [job] = await Promise.all([api.getJob(id), refreshStats()]);
+    const raw = await rawView(job);
     const st = { page: 1, tab: 'markdown', scope: 'page', full: false };
     /* the mock and the real service both mark pages as <!-- page N -->, so the Markdown can be cut per page */
     const mdParts = {};
@@ -451,6 +498,11 @@
     const paperEl = (q) => h('article', { class: 'paper' + (job.rendered ? ' paper-rendered' : ''), 'aria-label': `Page ${q.idx} content` }, renderBlocks(q.blocks));
     /* full view: every page stacked in one scrolling box; the page buttons and arrows jump to a page */
     function paintPaper() {
+      if (raw) {
+        if (raw.at) raw.node.src = raw.at(st.page);
+        if (!raw.node.isConnected) paperSlot.replaceChildren(raw.node);
+        return;
+      }
       if (!st.full) { paperSlot.replaceChildren(paperEl(job.pages[st.page - 1])); return; }
       paperSlot.replaceChildren(h('div', { class: 'paper-scroll', tabindex: '0', 'aria-label': 'All pages' }, job.pages.map((q) =>
         h('div', { id: `pg-${q.idx}` },
@@ -469,12 +521,14 @@
       if (st.tab === 'markdown') setTab('markdown');
       if (st.full) scrollToPage();
     }
+    const rendered = job.rendered && !raw;
+    fullBtn.hidden = !!raw; // the PDF viewer already scrolls every page, a CSV or image is a single view
     const viewer = h('section', { class: 'card', 'aria-labelledby': 'viewer-h' },
       h('div', { class: 'pane-head' },
-        h('h2', { id: 'viewer-h', text: job.rendered ? 'Rendered view' : 'Original' }),
+        h('h2', { id: 'viewer-h', text: rendered ? 'Rendered view' : 'Original' }),
         h('div', { class: 'pager' }, fullBtn, prevBtn, countEl, nextBtn)),
       h('div', { class: 'pane-body' },
-        job.rendered ? h('p', { class: 'note' }, icon('info'), 'This is a rendered view of the content extracted from your file, not the original layout.') : null,
+        rendered ? h('p', { class: 'note' }, icon('info'), 'This is a rendered view of the content extracted from your file, not the original layout.') : null,
         picks,
         h('div', { class: 'od-row', style: 'margin-bottom:12px' }, h('span', { class: 'muted', style: 'font-size:14px', text: 'Route for this page' }), routeSlot),
         paperSlot));
