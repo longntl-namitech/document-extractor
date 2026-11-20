@@ -255,7 +255,9 @@ h1:focus, h2:focus { outline: none; }
 .split > .card { display: flex; flex-direction: column; }
 #out-panel { flex: 1 1 0; min-height: 0; display: flex; flex-direction: column; }
 #out-panel .code { flex: 1 1 0; max-height: none; }
-.pane-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--s2) var(--s3); padding: var(--s3) var(--s4); border-bottom: 1px solid var(--border); min-height: 56px; }
+/* both bars of the Original / Markdown split share one height */
+:root { --bar-h: 72px; }
+.pane-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--s2) var(--s3); padding: 0 var(--s4); border-bottom: 1px solid var(--border); min-height: var(--bar-h); box-sizing: border-box; }
 .pane-head h2 { font-size: var(--fs-small); font-weight: 500; letter-spacing: 0; }
 .pane-body { padding: var(--s4); }
 .pager { display: flex; flex-wrap: wrap; gap: var(--s2); align-items: center; }
@@ -293,8 +295,9 @@ h1:focus, h2:focus { outline: none; }
 .tab:hover { color: var(--text); }
 .tab[aria-selected='true'] { color: var(--accent-text); border-bottom-color: var(--accent); font-weight: 500; }
 .tools { display: flex; flex-wrap: wrap; gap: var(--s2); }
-.out-bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--s2) var(--s3); padding: var(--s1) var(--s4) 0; border-bottom: 1px solid var(--border); }
-.out-bar .tools { padding-bottom: var(--s2); }
+.out-bar { display: flex; flex-wrap: wrap; align-items: stretch; justify-content: space-between; gap: var(--s2) var(--s3); padding: 0 var(--s4); border-bottom: 1px solid var(--border); min-height: var(--bar-h); box-sizing: border-box; }
+.out-bar .tabs { align-items: stretch; }
+.out-bar .tools { align-self: center; }
 .code { margin: 0; padding: var(--s4); max-height: 800px; min-height: 720px; overflow: auto; font: 400 13px/1.6 var(--font-mono); color: var(--text); white-space: pre; tab-size: 2; background: var(--surface); border-radius: 0 0 var(--radius) var(--radius); overflow-wrap: normal; }
 .code .k { color: var(--accent-text); }
 .code .n { color: var(--num); font-weight: 500; }
