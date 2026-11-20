@@ -14,8 +14,8 @@
   const MAX_BYTES = 40000000;
   const MAX_PAGES = 10;
   const DOC_CAP = 0.05;
-  const EXTS = ['pdf', 'png', 'jpg', 'jpeg', 'docx', 'xlsx', 'pptx'];
-  const STRUCTURED = ['docx', 'xlsx', 'pptx'];
+  const EXTS = ['pdf', 'png', 'jpg', 'jpeg', 'csv', 'docx', 'xlsx', 'pptx'];
+  const STRUCTURED = ['csv', 'docx', 'xlsx', 'pptx'];
   const STORE_KEY = 'docx-playground-history-v1';
 
   const wait = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -163,6 +163,34 @@
     }
   };
 
+  const STRUCT = 'Structured file, read directly';
+  const MENU_HEAD = ['Món', 'Tên tiếng Nhật', 'Price (VND)', 'Notes'];
+  const MENU_ROWS = [
+    ['Cà phê sữa đá', 'アイスミルクコーヒー', '35000', 'Strong, sweet'],
+    ['Bánh mì thịt', 'バインミー', '30000', 'Served warm'],
+    ['Phở bò', '牛肉のフォー', '55000', 'Beef, rice noodles'],
+    ['Trà đào cam sả', '桃とオレンジのお茶', '45000', 'Peach, orange, lemongrass'],
+    ['Sinh tố bơ', 'アボカドスムージー', '50000', 'Avocado with condensed milk']];
+  const MENU = {
+    name: 'Sample menu.csv', ext: 'csv', size: 383, docType: 'other', src: 'samples/menu.csv',
+    pages: [page(TXT, STRUCT, 80, 0, [H('Cafe menu'), TB(MENU_HEAD, MENU_ROWS)])],
+    json: genericJson('Cafe menu', 'csv', 1, [{ name: 'Rows', value: '5' }])
+  };
+  const REPORT = {
+    name: 'Sample report.pdf', ext: 'pdf', size: 1448, docType: 'other', src: 'samples/report.pdf',
+    pages: [
+      page(TXT, 'Digital text found, no OCR needed', 160, 0, [
+        H('Quarterly report'),
+        P('Q3 summary for the fictional Brightwater Freight.'),
+        KV([['Shipments handled', '1,248'], ['On-time rate', '96.4%'], ['Average cost per shipment', '$41.20']])]),
+      page(TXT, 'Digital text found, no OCR needed', 150, 0, [
+        H('Regional breakdown'),
+        TB(['Region', 'Shipments', 'On time'], [['North', '412', '97.1%'], ['Central', '508', '96.0%'], ['South', '328', '95.7%']]),
+        P('Next review: first week of October.')])
+    ],
+    json: genericJson('Quarterly report', 'pdf', 2)
+  };
+
   const TEMPLATES = { invoice: INVOICE, receipt: RECEIPT, contract: CONTRACT, resume: RESUME, cv: RESUME };
 
   /* ---------- generic content for documents without a template ---------- */
@@ -195,7 +223,9 @@
     return {
       id, name: o.name, ext: o.ext, size: o.size, status: o.status || 'complete', docType: o.docType,
       markdown: toMarkdown(o.pages), json: o.json, rendered: STRUCTURED.includes(o.ext), pages,
-      pageCount: pages.length, totalCost: round3(pages.reduce((s, p) => s + p.cost, 0)), free: !!o.free, createdAt: o.at
+      pageCount: pages.length, totalCost: round3(pages.reduce((s, p) => s + p.cost, 0)), free: !!o.free, createdAt: o.at,
+      file: o.file, /* uploaded File for the raw view; becomes {} after a reload because history is JSON-persisted */
+      src: o.src /* sample only: URL of the real file, fetched for the raw view */
     };
   }
   function seed(id, o) {
@@ -208,7 +238,9 @@
     ['sample-invoice', INVOICE, 'Two-page supplier invoice with line items'],
     ['sample-receipt', RECEIPT, 'Photographed cafe receipt'],
     ['sample-contract', CONTRACT, 'Four-page services agreement'],
-    ['sample-resume', RESUME, 'Two-page Word resume']
+    ['sample-resume', RESUME, 'Two-page Word resume'],
+    ['sample-report', REPORT, 'Two-page PDF, shown as the original file'],
+    ['sample-menu', MENU, 'CSV in English, Vietnamese and Japanese, shown as a table']
   ];
   SAMPLE_DEFS.forEach(([id, tpl]) => seed(id, Object.assign({}, tpl, { free: true, at: now })));
 
@@ -282,7 +314,7 @@
     } else {
       const n = /long|big/.test(low) ? 12
         : ext === 'pdf' ? Math.min(5, Math.max(2, Math.floor(file.size / 250000) + 2))
-        : ext === 'pptx' ? 3 : STRUCTURED.includes(ext) ? 2 : 1;
+        : ext === 'pptx' ? 3 : ext === 'csv' ? 1 : STRUCTURED.includes(ext) ? 2 : 1;
       const routes = Array.from({ length: n }, (_, i) => {
         if (STRUCTURED.includes(ext)) return { route: TXT, reason: 'Structured file, read directly', ms: 90 };
         if (ext !== 'pdf') return { route: 'OCR', reason: 'Image file, read locally', ms: 1100, cost: 0.001 };
@@ -355,7 +387,7 @@
     if (spec.pages.length > MAX_PAGES) throw err('too_many_pages', { pages: spec.pages.length });
 
     const id = `job-${++seq}`;
-    const final = makeJob(id, Object.assign({ name, ext, size: file.size || 0, at: Date.now() }, spec));
+    const final = makeJob(id, Object.assign({ name, ext, size: file.size || 0, at: Date.now(), file }, spec));
     const rec = { final, state: 'running', timers: [], log: [], subs: new Set(), donePages: [] };
     records.set(id, rec);
     schedule(rec);
