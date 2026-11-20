@@ -450,7 +450,8 @@
     const degraded = job.pages.filter((p) => p.degraded);
 
     const statusBadge = mdOnly
-      ? h('span', { class: 'badge badge--warn' }, icon('info'), 'Markdown only')
+      ? h('span', { class: 'badge badge--warn has-tip', tabindex: '0', 'aria-describedby': 'mdonly-tip' }, icon('info'), 'Markdown only',
+        h('span', { class: 'tip', role: 'tooltip', id: 'mdonly-tip', text: 'The text was read, but the document type and fields could not be extracted. The Markdown below is complete. There is no JSON for this document.' }))
       : job.status === 'partial'
         ? h('span', { class: 'badge badge--warn has-tip', tabindex: '0', 'aria-describedby': 'partial-tip' }, icon('alert'), 'Partial',
           h('span', { class: 'tip', role: 'tooltip', id: 'partial-tip', text: `${degraded.length} of ${job.pages.length} pages fell back to OCR and may be less accurate. They are marked "Degraded" in the page list and the table below.` }))
@@ -460,13 +461,6 @@
       ? h('span', { class: 'badge has-tip', tabindex: '0', 'aria-describedby': 'sample-tip' }, icon('info'), 'Sample',
         h('span', { class: 'tip', role: 'tooltip', id: 'sample-tip', text: 'This was processed earlier, so it opens instantly.' }))
       : null;
-    const banners = [];
-    if (mdOnly) {
-      banners.push(h('div', { class: 'alert alert--warn', role: 'status' }, icon('info'),
-        h('div', {}, h('h2', { text: 'Markdown only' }),
-          h('p', { text: 'The text was read, but the document type and fields could not be extracted. The Markdown below is complete. There is no JSON for this document.' })),
-        h('span')));
-    }
 
     /* viewer */
     const picks = h('div', { class: 'page-picks', role: 'group', 'aria-label': 'Pages' });
@@ -525,12 +519,12 @@
     fullBtn.hidden = !!raw; // the PDF viewer already scrolls every page, a CSV or image is a single view
     const viewer = h('section', { class: 'card', 'aria-labelledby': 'viewer-h' },
       h('div', { class: 'pane-head' },
-        h('h2', { id: 'viewer-h', text: rendered ? 'Rendered view' : 'Original' }),
+        h('div', { class: 'od-row' }, h('h2', { id: 'viewer-h', text: rendered ? 'Rendered view' : 'Original' }),
+          rendered ? h('span', { class: 'has-tip', tabindex: '0', 'aria-describedby': 'rendered-tip', style: 'display:inline-flex' }, icon('info'),
+            h('span', { class: 'tip', role: 'tooltip', id: 'rendered-tip', text: 'This is a rendered view of the content extracted from your file, not the original layout.' })) : null,
+          picks, routeSlot),
         h('div', { class: 'pager' }, fullBtn, prevBtn, countEl, nextBtn)),
       h('div', { class: 'pane-body' },
-        rendered ? h('p', { class: 'note' }, icon('info'), 'This is a rendered view of the content extracted from your file, not the original layout.') : null,
-        picks,
-        h('div', { class: 'od-row', style: 'margin-bottom:12px' }, h('span', { class: 'muted', style: 'font-size:14px', text: 'Route for this page' }), routeSlot),
         paperSlot));
 
     /* output */
@@ -617,8 +611,7 @@
       h('div', { class: 'result-head' },
         h('div', { class: 'result-title' }, heading, docBadge(job.docType), statusBadge, sampleBadge),
         h('p', { class: 'muted', text: `${fmtBytes(job.size)} - ${job.pages.length} ${job.pages.length === 1 ? 'page' : 'pages'} - ${fmtWhen(job.createdAt)}` })),
-      h('div', { style: 'margin-top:24px' }, banners),
-      h('div', { class: 'split', style: banners.length ? 'margin-top:0' : '' }, viewer, output),
+      h('div', { class: 'split' }, viewer, output),
       costSection,
       h('div', { class: 'job-actions' }, h('button', { type: 'button', class: 'btn btn-primary', onclick: () => { S.error = null; showHome('#choose'); } }, icon('upload'), 'Process another document')));
     paintViewer();
