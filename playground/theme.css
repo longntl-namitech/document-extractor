@@ -1,0 +1,107 @@
+/* Portfolio theme. Loaded after styles.css, so it only overrides tokens.
+   Values come from the portfolio site (src/styles/global.css, hero.css, home.css):
+   bg #27241d, text #d3cec4, accent #f0b429, accent-2 #faf9f7, muted #a39e93, card #423d33,
+   8px media radius, 1px white 8% ring. Type is IBM Plex (Sans, Mono, Serif for large headings only). */
+:root {
+  --font-ui: 'IBM Plex Sans', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
+  --font-display: 'IBM Plex Serif', ui-serif, Georgia, 'Times New Roman', serif;
+
+  /* light variant: same warm family, only for people who switch it on */
+  --bg: #f6f3ec;
+  --surface: #fffdf9;
+  --surface-2: #efebe2;
+  --text: #27241d;
+  --muted: #5f594d;
+  --border: #ddd7ca;
+  --border-strong: #8a8374;
+  --accent: #f0b429;
+  --accent-hover: #dca11c;
+  --on-accent: #27241d;
+  --accent-tint: #fbefd0;
+  --accent-text: #7a5200;
+  --focus: #8a5a00;
+  --danger: #a3261f;
+  --danger-tint: #fbeceb;
+  --warn: #7a4a00;
+  --warn-tint: #fbf1dc;
+  --ok: #1d6b3a;
+  --ok-tint: #e4f3ea;
+  --num: #27241d;
+  --paper: #fbfaf7;
+  --paper-text: #27241d;
+  --paper-muted: #6a6458;
+  --paper-line: #e3ded2;
+
+  --chip-text-bg: #f3f0ea; --chip-text-fg: #27241d; --chip-text-bd: #b3ab9b;
+  --chip-ocr-bg: #cfc7b6;  --chip-ocr-fg: #1d1a14;  --chip-ocr-bd: #cfc7b6;
+  --chip-vis-bg: #27241d;  --chip-vis-fg: #faf9f7;  --chip-vis-bd: #27241d;
+
+  --glow: radial-gradient(900px circle at 12% -5%, rgb(240 180 41 / 0.14), transparent 60%),
+          linear-gradient(180deg, #faf7f0 0%, #f6f3ec 55%);
+}
+
+/* the default, and the only theme the portfolio has */
+:root[data-theme='dark'] {
+  --bg: #27241d;
+  --surface: #2f2b23;
+  --surface-2: #38342b;
+  --text: #d3cec4;
+  --muted: #a39e93;
+  --border: #3d382e;
+  --border-strong: #6f695d;
+  --accent: #f0b429;
+  --accent-hover: #f7c55a;
+  --on-accent: #27241d;
+  --accent-tint: #3a3220;
+  --accent-text: #f0b429;
+  --focus: #f0b429;
+  --danger: #f4a39b;
+  --danger-tint: #3a2220;
+  --warn: #f0c277;
+  --warn-tint: #3a2f14;
+  --ok: #8fd8a8;
+  --ok-tint: #223024;
+  --num: #faf9f7;
+
+  --chip-text-bg: #2f2b23; --chip-text-fg: #d3cec4; --chip-text-bd: #6f695d;
+  --chip-ocr-bg: #5a5448;  --chip-ocr-fg: #faf9f7;  --chip-ocr-bd: #5a5448;
+  --chip-vis-bg: #f0b429;  --chip-vis-fg: #27241d;  --chip-vis-bd: #f0b429;
+
+  --glow: radial-gradient(900px circle at 12% -5%, rgb(240 180 41 / 0.12), transparent 60%),
+          radial-gradient(800px circle at 95% 105%, rgb(240 180 41 / 0.07), transparent 60%),
+          linear-gradient(180deg, #2c2820 0%, #27241d 55%);
+}
+
+html { color-scheme: light; accent-color: var(--accent); }
+html[data-theme='dark'] { color-scheme: dark; }
+body { background-color: var(--bg); background-image: var(--glow); background-attachment: fixed; }
+
+/* Plex Serif for the page title and the drop-zone heading only, never labels or buttons */
+h1 { font-family: var(--font-display); font-weight: 400; font-size: 40px; line-height: 1.15; letter-spacing: -0.02em; }
+.result-title h1 { font-size: 28px; }
+.drop h2 { font-family: var(--font-display); font-weight: 400; font-size: 28px; letter-spacing: -0.01em; }
+
+/* header sits on the page background, with a hairline like the site's sections */
+.topbar { background: transparent; border-bottom: 1px solid var(--border); }
+.btn-primary:hover { color: var(--on-accent); }
+
+/* result header: title and badges on the left, file size, pages and date on the right of the same line */
+.result-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--s2) var(--s4); }
+.result-head > p { white-space: nowrap; }
+
+/* explanation shown on hover or keyboard focus of a badge, instead of a banner */
+.has-tip { position: relative; cursor: help; }
+.has-tip .tip {
+  display: none; position: absolute; left: 0; top: calc(100% + 8px); z-index: 20;
+  width: max-content; max-width: min(420px, 80vw); padding: var(--s3) var(--s4);
+  background: var(--surface-2); border: 1px solid var(--border-strong); border-radius: var(--radius);
+  color: var(--text); font-size: var(--fs-small); font-weight: 400; line-height: 1.5; white-space: normal;
+}
+.has-tip:hover .tip, .has-tip:focus .tip, .has-tip:focus-within .tip { display: block; }
+
+/* capture mode: ?capture=1 (add &theme=dark|light). Clean frame for screenshots and screen recordings. */
+html[data-capture] { scrollbar-width: none; }
+html[data-capture]::-webkit-scrollbar { display: none; }
+html[data-capture] .foot, html[data-capture] .toast, html[data-capture] .skip, html[data-capture] #theme-toggle { display: none; }
+html[data-capture] * { cursor: default !important; }
