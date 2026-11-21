@@ -262,7 +262,6 @@
     const cap = api.DOC_CAP;
     const rows = Array.from({ length: meta.pageCount }, () => ({ status: 'waiting', route: null, reason: null, cost: 0 }));
     const classify = { status: 'waiting' };
-    let finished = false;
 
     const costText = h('span', { class: 'cost-big', text: money(0) });
     const barFill = h('span', { class: 'bar-fill' });
@@ -288,7 +287,6 @@
         h('div', { class: 'step-title' }, h('strong', { text: 'Classify and extract fields' }), cStatus), cNote),
       h('span', { class: 'step-cost', text: '' }));
 
-    const viewBtn = h('button', { type: 'button', class: 'btn btn-primary', disabled: true, onclick: () => showResult(meta.id, 'proc') }, 'View result');
     const cancelBtn = h('button', { type: 'button', class: 'btn', onclick: () => { api.cancelJob(meta.id); S.error = null; showHome('#choose'); } }, 'Cancel');
     const heading = h('h1', { tabindex: '-1', class: 'od-truncate', text: meta.name });
 
@@ -322,11 +320,8 @@
     S.unsub = api.onProgress(meta.id, (ev) => {
       if (ev.step === 'classify') { classify.status = ev.status; paintClassify(); return; }
       if (ev.step === 'complete') {
-        finished = true;
-        viewBtn.disabled = false;
         refreshStats();
-        announce('Processing finished. The result is ready.');
-        viewBtn.focus();
+        showResult(meta.id, 'proc');
         return;
       }
       const i = ev.page - 1;
@@ -349,7 +344,7 @@
         h('div', { class: 'bar', role: 'progressbar', 'aria-label': 'Cost against the per-document cap', 'aria-valuemin': '0', 'aria-valuemax': String(cap) }, barFill),
         stripSlot),
       h('ol', { class: 'steps', 'aria-label': 'Pages' }, els.map((e) => e.li), cLi),
-      h('div', { class: 'job-actions' }, viewBtn, cancelBtn)), heading);
+      h('div', { class: 'job-actions' }, cancelBtn)), heading);
   }
 
   /* ---------- result ---------- */
