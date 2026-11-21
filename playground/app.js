@@ -143,6 +143,8 @@
         return { title: 'This file is password-protected', text: `${name} is encrypted, so it can't be read. Nothing was charged.`, hint: 'Remove the password in the app that created the file, then upload it again.', retry: true };
       case 'damaged':
         return { title: 'This file looks damaged', text: `${name} could not be opened, so nothing was processed or charged.`, hint: 'Export or save the file again from the original app and retry.', retry: true };
+      case 'scanned':
+        return { title: 'This PDF is a scan', text: `${name} only contains page images, so no text could be read from it. Nothing was charged.`, hint: 'Upload a PDF with selectable text, or try again when text reading (OCR) is available.', retry: true };
       case 'unsupported':
         return { title: 'File type not supported', text: `${name} is a .${(d.ext || '').toUpperCase() || 'unknown'} file. Accepted types are PDF, PNG, JPG, CSV, DOCX, XLSX and PPTX.`, hint: 'Convert the file to one of the accepted types and try again.', retry: true };
       default:
@@ -260,7 +262,6 @@
     const cap = api.DOC_CAP;
     const rows = Array.from({ length: meta.pageCount }, () => ({ status: 'waiting', route: null, reason: null, cost: 0 }));
     const classify = { status: 'waiting' };
-    let finished = false;
 
     const costText = h('span', { class: 'cost-big', text: money(0) });
     const barFill = h('span', { class: 'bar-fill' });
@@ -286,7 +287,6 @@
         h('div', { class: 'step-title' }, h('strong', { text: 'Classify and extract fields' }), cStatus), cNote),
       h('span', { class: 'step-cost', text: '' }));
 
-    const viewBtn = h('button', { type: 'button', class: 'btn btn-primary', disabled: true, onclick: () => showResult(meta.id, 'proc') }, 'View result');
     const cancelBtn = h('button', { type: 'button', class: 'btn', onclick: () => { api.cancelJob(meta.id); S.error = null; showHome('#choose'); } }, 'Cancel');
     const heading = h('h1', { tabindex: '-1', class: 'od-truncate', text: meta.name });
 
@@ -320,11 +320,8 @@
     S.unsub = api.onProgress(meta.id, (ev) => {
       if (ev.step === 'classify') { classify.status = ev.status; paintClassify(); return; }
       if (ev.step === 'complete') {
-        finished = true;
-        viewBtn.disabled = false;
         refreshStats();
-        announce('Processing finished. The result is ready.');
-        viewBtn.focus();
+        showResult(meta.id, 'proc');
         return;
       }
       const i = ev.page - 1;
@@ -347,7 +344,7 @@
         h('div', { class: 'bar', role: 'progressbar', 'aria-label': 'Cost against the per-document cap', 'aria-valuemin': '0', 'aria-valuemax': String(cap) }, barFill),
         stripSlot),
       h('ol', { class: 'steps', 'aria-label': 'Pages' }, els.map((e) => e.li), cLi),
-      h('div', { class: 'job-actions' }, viewBtn, cancelBtn)), heading);
+      h('div', { class: 'job-actions' }, cancelBtn)), heading);
   }
 
   /* ---------- result ---------- */
@@ -605,15 +602,15 @@
         h('strong', { text: `${job.pages.length} ${job.pages.length === 1 ? 'page' : 'pages'}, ${money(job.totalCost)}` })));
 
     const backBtn = h('button', { type: 'button', class: 'btn btn-ghost', onclick: () => { S.error = null; showHome(); } }, icon('back'), 'All documents');
+    const anotherBtn = h('button', { type: 'button', class: 'btn btn-primary', onclick: () => { S.error = null; showHome('#choose'); } }, icon('upload'), 'Process another document');
     const heading = h('h1', { tabindex: '-1', text: job.name });
     const root = h('div', {},
-      h('div', { style: 'margin-bottom:12px' }, backBtn),
+      h('div', { class: 'result-bar' }, backBtn, anotherBtn),
       h('div', { class: 'result-head' },
         h('div', { class: 'result-title' }, heading, docBadge(job.docType), statusBadge, sampleBadge),
         h('p', { class: 'muted', text: `${fmtBytes(job.size)} - ${job.pages.length} ${job.pages.length === 1 ? 'page' : 'pages'} - ${fmtWhen(job.createdAt)}` })),
       h('div', { class: 'split' }, viewer, output),
-      costSection,
-      h('div', { class: 'job-actions' }, h('button', { type: 'button', class: 'btn btn-primary', onclick: () => { S.error = null; showHome('#choose'); } }, icon('upload'), 'Process another document')));
+      costSection);
     paintViewer();
     setTab('markdown');
     mount(root, heading);

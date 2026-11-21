@@ -382,6 +382,7 @@
     if (file.size > MAX_BYTES) throw err('too_large', { size: file.size });
     if (/encrypt|locked|password/.test(low)) throw err('encrypted');
     if (/damaged|corrupt|broken/.test(low)) throw err('damaged');
+    if (/image-only/.test(low)) throw err('scanned');
 
     const spec = specFor(file, ext, low);
     if (spec.pages.length > MAX_PAGES) throw err('too_many_pages', { pages: spec.pages.length });
