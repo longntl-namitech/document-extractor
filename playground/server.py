@@ -19,6 +19,8 @@ import tempfile
 import time
 
 HERE = os.path.dirname(os.path.abspath(__file__))
+if not os.environ.get("EXTRACTOR_DIR"):
+    sys.exit("EXTRACTOR_DIR is not set: point it at the namichain-file-extractor checkout")
 sys.path.insert(0, os.environ["EXTRACTOR_DIR"])
 
 from fastapi import FastAPI, File, UploadFile
