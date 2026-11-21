@@ -106,12 +106,13 @@
   <details class="notes">
     <summary>Prototype notes</summary>
     <div class="notes-body">
-      <p>All results come from a mock API in <span class="mono">api.js</span>. No file leaves your browser. Try these file names to reach each state:</p>
+      <p>Results come from the real extractor through <span class="mono">server.py</span>. Add <span class="mono">?api=mock</span> to the address to use the mock API in <span class="mono">api.js</span> instead, where no file leaves your browser. With the mock, try these file names to reach each state:</p>
       <ul>
         <li><span class="mono">scan-statement.pdf</span> - partial result with a degraded page</li>
         <li><span class="mono">meeting-markdown.pdf</span> - Markdown only, field extraction failed</li>
         <li><span class="mono">long-report.pdf</span> - more than 10 pages</li>
         <li><span class="mono">encrypted-report.pdf</span> and <span class="mono">damaged-scan.pdf</span> - encrypted or damaged file</li>
+        <li><span class="mono">image-only.pdf</span> - scanned PDF with no readable text</li>
         <li>Any file over 40 MB, or a type like <span class="mono">.txt</span>, triggers the size and type messages</li>
         <li>Names containing invoice, receipt, contract or resume return that document type</li>
       </ul>
@@ -122,7 +123,7 @@
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 <div class="sr-only" id="live" role="status" aria-live="polite"></div>
 
-<script src="api.js"></script>
+<script>document.write('<script src="' + (/[?&]api=mock\b/.test(location.search) ? 'api.js' : 'api.real.js') + '"><\/script>');</script>
 <script src="app.js"></script>
 </body>
 </html>

@@ -246,6 +246,7 @@ h1:focus, h2:focus { outline: none; }
 .job-actions { display: flex; flex-wrap: wrap; gap: var(--s3); margin-top: var(--s5); }
 
 /* ---------- result ---------- */
+.result-bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--s2) var(--s3); margin-bottom: 12px; }
 .result-head { display: grid; gap: var(--s3); }
 .result-title { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s3); }
 .result-title h1 { min-width: 0; font-size: var(--fs-h2); letter-spacing: -0.015em; }
