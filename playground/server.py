@@ -4,8 +4,8 @@ Takes an uploaded file and calls extractor.extract_file() of namichain-file-extr
 directly, the same path tests/smoke_local.py uses. That skips validate_url() and
 download_file(), so it proves nothing about the SSRF guard or the 50 MB download limit.
 
-Files are read with vlm on when the extractor has VLLM_URL and VLLM_MODEL set, so a
-scanned PDF is read instead of rejected. Failures return {"error_code", "error"}:
+Files are read with vlm on when the extractor supports it and has VLLM_URL and VLLM_MODEL
+set, so a scanned PDF is read instead of rejected. An extractor without vlm is called without it. Failures return {"error_code", "error"}:
 the UI shows copy by error_code and never parses the message.
 
 Run in the namichain-file-extractor environment (Docker or its venv) from this repo's root:
@@ -42,8 +42,8 @@ def extract(file: UploadFile = File(...)):
         path = tmp.name
     started = time.perf_counter()
     try:
-        result = extractor.extract_file(
-            path, "http://local/" + (file.filename or "upload"), vlm=extractor._VLM_CFG is not None)
+        vlm = {"vlm": True} if getattr(extractor, "_VLM_CFG", None) is not None else {}
+        result = extractor.extract_file(path, "http://local/" + (file.filename or "upload"), **vlm)
         return {**result, "ms": round((time.perf_counter() - started) * 1000)}
     except Exception as e:
         return JSONResponse(status_code=400, content={"error_code": error_code(e), "error": str(e)})
