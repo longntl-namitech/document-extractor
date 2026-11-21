@@ -11,7 +11,7 @@ the UI shows copy by error_code and never parses the message.
 Run in the namichain-file-extractor environment (Docker or its venv) from this repo's root:
   EXTRACTOR_DIR=/path/to/namichain-file-extractor \
     uvicorn server:app --app-dir playground --port 8765
-Then open http://127.0.0.1:8765/?api=real
+Then open http://127.0.0.1:8765/ (add ?api=mock for the mock API)
 """
 import os
 import sys

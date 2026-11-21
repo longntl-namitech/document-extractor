@@ -1,6 +1,6 @@
 /* Real client for the playground UI: same window.DocApi shape as api.js (the mock),
    backed by POST /api/extract on server.py, which calls extractor.extract_file().
-   Loaded with ?api=real. The service has no per-page routes, JSON fields or cost,
+   Loaded by default; ?api=mock loads the mock instead. The service has no per-page routes, JSON fields or cost,
    so each file is one "page" and the result is Markdown only. */
 (function (global) {
   'use strict';
