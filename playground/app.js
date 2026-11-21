@@ -143,6 +143,8 @@
         return { title: 'This file is password-protected', text: `${name} is encrypted, so it can't be read. Nothing was charged.`, hint: 'Remove the password in the app that created the file, then upload it again.', retry: true };
       case 'damaged':
         return { title: 'This file looks damaged', text: `${name} could not be opened, so nothing was processed or charged.`, hint: 'Export or save the file again from the original app and retry.', retry: true };
+      case 'scanned':
+        return { title: 'This PDF is a scan', text: `${name} only contains page images, so no text could be read from it. Nothing was charged.`, hint: 'Upload a PDF with selectable text, or try again when text reading (OCR) is available.', retry: true };
       case 'unsupported':
         return { title: 'File type not supported', text: `${name} is a .${(d.ext || '').toUpperCase() || 'unknown'} file. Accepted types are PDF, PNG, JPG, CSV, DOCX, XLSX and PPTX.`, hint: 'Convert the file to one of the accepted types and try again.', retry: true };
       default:
@@ -605,15 +607,15 @@
         h('strong', { text: `${job.pages.length} ${job.pages.length === 1 ? 'page' : 'pages'}, ${money(job.totalCost)}` })));
 
     const backBtn = h('button', { type: 'button', class: 'btn btn-ghost', onclick: () => { S.error = null; showHome(); } }, icon('back'), 'All documents');
+    const anotherBtn = h('button', { type: 'button', class: 'btn btn-primary', onclick: () => { S.error = null; showHome('#choose'); } }, icon('upload'), 'Process another document');
     const heading = h('h1', { tabindex: '-1', text: job.name });
     const root = h('div', {},
-      h('div', { style: 'margin-bottom:12px' }, backBtn),
+      h('div', { class: 'result-bar' }, backBtn, anotherBtn),
       h('div', { class: 'result-head' },
         h('div', { class: 'result-title' }, heading, docBadge(job.docType), statusBadge, sampleBadge),
         h('p', { class: 'muted', text: `${fmtBytes(job.size)} - ${job.pages.length} ${job.pages.length === 1 ? 'page' : 'pages'} - ${fmtWhen(job.createdAt)}` })),
       h('div', { class: 'split' }, viewer, output),
-      costSection,
-      h('div', { class: 'job-actions' }, h('button', { type: 'button', class: 'btn btn-primary', onclick: () => { S.error = null; showHome('#choose'); } }, icon('upload'), 'Process another document')));
+      costSection);
     paintViewer();
     setTab('markdown');
     mount(root, heading);
