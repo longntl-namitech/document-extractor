@@ -556,7 +556,7 @@
       if (isMd && st.md === 'preview') {
         // extractor output is untrusted file content, so the rendered HTML is sanitized
         const div = h('div', { class: 'md-preview', tabindex: '0', 'aria-label': byPage ? `Markdown preview for page ${st.page}` : 'Markdown preview' });
-        div.innerHTML = DOMPurify.sanitize(marked.parse(text));
+        div.innerHTML = DOMPurify.sanitize(marked.parse(text), { FORBID_TAGS: ['style'] });
         panel.replaceChildren(div);
       } else if (isMd) {
         panel.replaceChildren(h('pre', { class: 'code', tabindex: '0', 'aria-label': byPage ? `Markdown for page ${st.page}` : 'Markdown output', text }));
