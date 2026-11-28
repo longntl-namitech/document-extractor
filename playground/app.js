@@ -438,7 +438,7 @@
     cleanupJob();
     const [job] = await Promise.all([api.getJob(id), refreshStats()]);
     const raw = await rawView(job);
-    const st = { page: 1, tab: 'markdown', scope: 'page', full: false };
+    const st = { page: 1, tab: 'markdown', scope: 'page', full: false, md: 'preview' };
     /* the mock and the real service both mark pages as <!-- page N -->, so the Markdown can be cut per page */
     const mdParts = {};
     job.markdown.split(/(?=<!-- page \d+ -->)/).forEach((s) => { const m = s.match(/^<!-- page (\d+) -->/); if (m) mdParts[Number(m[1])] = s.trim(); });
@@ -547,11 +547,18 @@
       const label = isMd ? (byPage ? `Page ${st.page} Markdown` : 'Markdown') : 'JSON';
       const ok = isMd || !mdOnly;
       const scopeBtn = (v, t) => h('button', { type: 'button', class: 'btn', 'aria-pressed': String(st.scope === v), onclick: () => { st.scope = v; setTab('markdown'); } }, t);
+      const viewBtn = (v, t) => h('button', { type: 'button', class: 'btn', 'aria-pressed': String(st.md === v), onclick: () => { st.md = v; setTab('markdown'); } }, t);
       tools.replaceChildren(
+        ...(isMd ? [viewBtn('preview', 'Preview'), viewBtn('raw', 'Raw')] : []),
         ...(canSplit ? [scopeBtn('page', 'This page'), scopeBtn('all', 'All pages')] : []),
         h('button', { type: 'button', class: 'btn', disabled: !ok, onclick: () => copyText(text, label) }, icon('copy'), 'Copy'),
         h('button', { type: 'button', class: 'btn', disabled: !ok, onclick: () => download(`${base}${byPage ? `-page-${st.page}` : ''}.${isMd ? 'md' : 'json'}`, text, isMd ? 'text/markdown' : 'application/json') }, icon('download'), 'Download'));
-      if (isMd) {
+      if (isMd && st.md === 'preview') {
+        // extractor output is untrusted file content, so the rendered HTML is sanitized
+        const div = h('div', { class: 'md-preview', tabindex: '0', 'aria-label': byPage ? `Markdown preview for page ${st.page}` : 'Markdown preview' });
+        div.innerHTML = DOMPurify.sanitize(marked.parse(text), { FORBID_TAGS: ['style'], FORBID_ATTR: ['style'] });
+        panel.replaceChildren(div);
+      } else if (isMd) {
         panel.replaceChildren(h('pre', { class: 'code', tabindex: '0', 'aria-label': byPage ? `Markdown for page ${st.page}` : 'Markdown output', text }));
       } else if (mdOnly) {
         panel.replaceChildren(h('div', { class: 'panel-empty' }, icon('info'),

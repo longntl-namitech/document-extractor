@@ -363,3 +363,15 @@ table.cost { width: 100%; border-collapse: collapse; font-size: var(--fs-small);
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
 }
+
+/* Markdown preview: rendered extractor output, scrolls inside the panel like .code */
+.md-preview { flex: 1 1 0; margin: 0; padding: var(--s4); min-height: 720px; max-height: 800px; overflow: auto; color: var(--text); background: var(--surface); border-radius: 0 0 var(--radius) var(--radius); font-size: var(--fs-small); line-height: 1.6; overflow-wrap: anywhere; }
+.md-preview > :first-child { margin-top: 0; }
+.md-preview :is(h1, h2, h3, h4, h5, h6) { margin: var(--s4) 0 var(--s2); }
+.md-preview :is(p, ul, ol, pre, blockquote, table) { margin: 0 0 var(--s3); }
+.md-preview code { font: 400 13px/1.6 var(--font-mono); }
+.md-preview pre { padding: var(--s3); overflow: auto; border: 1px solid var(--border); border-radius: var(--radius); }
+.md-preview table { border-collapse: collapse; overflow-wrap: normal; }
+.md-preview :is(th, td) { padding: var(--s1) var(--s2); border: 1px solid var(--border-strong); text-align: left; vertical-align: top; }
+.md-preview th { font-weight: 500; }
+#out-panel .md-preview { max-height: none; }
